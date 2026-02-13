@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Veloka — Analytics Command Center</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-primary: #0a0a0f;
+    --bg-secondary: #12121a;
+    --bg-card: #16161f;
+    --bg-card-hover: #1c1c28;
+    --border: #232333;
+    --border-hover: #2d2d44;
+    --text-primary: #e8e8f0;
+    --text-secondary: #8888a4;
+    --text-muted: #555570;
+    --accent: #6c5ce7;
+    --accent-light: #8b7cf0;
+    --accent-dim: rgba(108,92,231,0.15);
+    --green: #00d2a0;
+    --green-dim: rgba(0,210,160,0.12);
+    --red: #ff6b6b;
+    --red-dim: rgba(255,107,107,0.12);
+    --amber: #ffc53d;
+    --amber-dim: rgba(255,197,61,0.12);
+    --blue: #4da6ff;
+    --blue-dim: rgba(77,166,255,0.12);
+    --cyan: #22d3ee;
+    --pink: #f472b6;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.3);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
+
+  /* ===== SETUP SCREEN ===== */
+  .setup-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: var(--bg-primary);
+    overflow-y: auto;
+    display: flex; align-items: flex-start; justify-content: center;
+    padding: 40px 0;
+    animation: fadeIn 0.4s ease;
+  }
+  .setup-overlay.hidden { display: none; }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+  .setup-container {
+    width: 100%; max-width: 560px; padding: 24px;
+    animation: slideUp 0.5s ease 0.1s both;
+  }
+
+  .setup-logo {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 48px;
+  }
+  .setup-logo .logo-mark {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-light));
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 18px; color: #fff;
+  }
+  .setup-logo .logo-text {
+    font-size: 22px; font-weight: 600; letter-spacing: -0.3px;
+  }
+
+  .setup-heading {
+    font-size: 28px; font-weight: 700; letter-spacing: -0.5px;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .setup-subheading {
+    font-size: 15px; color: var(--text-secondary);
+    line-height: 1.6; margin-bottom: 36px;
+  }
+
+  .setup-step {
+    display: flex; gap: 16px; margin-bottom: 28px;
+    padding: 20px; border-radius: var(--radius);
+    background: var(--bg-card); border: 1px solid var(--border);
+  }
+  .step-number {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--accent-dim); color: var(--accent-light);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600; flex-shrink: 0;
+  }
+  .step-content h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .step-content p { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+  .step-content a { color: var(--accent-light); text-decoration: none; }
+  .step-content a:hover { text-decoration: underline; }
+  .step-content code {
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    background: var(--bg-primary); padding: 2px 6px; border-radius: 4px;
+    color: var(--amber);
+  }
+
+  .form-group { margin-bottom: 20px; }
+  .form-group label {
+    display: block; font-size: 13px; font-weight: 500;
+    color: var(--text-secondary); margin-bottom: 8px;
+  }
+  .form-group input, .form-group textarea {
+    width: 100%; padding: 12px 16px;
+    background: var(--bg-secondary); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace; font-size: 13px;
+    transition: border-color 0.2s; outline: none;
+  }
+  .form-group textarea { min-height: 140px; resize: vertical; line-height: 1.5; }
+  .form-group input:focus, .form-group textarea:focus { border-color: var(--accent); }
+  .form-group input::placeholder, .form-group textarea::placeholder { color: var(--text-muted); }
+  .form-hint { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+
+  .btn-primary {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-light));
+    color: #fff; border: none; border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(108,92,231,0.4); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  .btn-demo {
+    width: 100%; padding: 14px; margin-top: 12px;
+    background: transparent;
+    color: var(--text-secondary); border: 1px dashed var(--border);
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+    cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-demo:hover { border-color: var(--accent); color: var(--accent-light); background: var(--accent-dim); }
+
+  .setup-divider {
+    display: flex; align-items: center; gap: 16px;
+    margin: 24px 0; color: var(--text-muted); font-size: 12px;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+  .setup-divider::before, .setup-divider::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  .setup-error {
+    padding: 12px 16px; border-radius: var(--radius-sm);
+    background: var(--red-dim); border: 1px solid rgba(255,107,107,0.2);
+    color: var(--red); font-size: 13px; margin-bottom: 16px;
+    display: none;
+  }
+
+  /* ===== MAIN DASHBOARD ===== */
+  .dashboard { display: none; }
+  .dashboard.visible { display: block; }
+
+  .topbar {
+    position: sticky; top: 0; z-index: 100;
+    padding: 16px 32px;
+    background: rgba(10,10,15,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .topbar .logo-mark {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-light));
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 14px; color: #fff;
+  }
+  .topbar .logo-text { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; }
+  .topbar .property-badge {
+    padding: 4px 10px; border-radius: 20px;
+    background: var(--accent-dim); color: var(--accent-light);
+    font-size: 12px; font-weight: 500;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+
+  .demo-badge {
+    padding: 4px 10px; border-radius: 20px;
+    background: var(--amber-dim); color: var(--amber);
+    font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+    text-transform: uppercase;
+    animation: pulse-badge 2s infinite;
+  }
+  @keyframes pulse-badge {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  .date-selector {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 14px; border-radius: var(--radius-sm);
+    background: var(--bg-card); border: 1px solid var(--border);
+    cursor: pointer; transition: all 0.2s;
+  }
+  .date-selector:hover { border-color: var(--border-hover); }
+  .date-selector select {
+    background: transparent; border: none; color: var(--text-primary);
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+    cursor: pointer; outline: none;
+    -webkit-appearance: none; appearance: none; padding-right: 4px;
+  }
+  .date-selector select option { background: var(--bg-card); }
+
+  .btn-sm {
+    padding: 8px 14px; border-radius: var(--radius-sm);
+    background: var(--bg-card); border: 1px solid var(--border);
+    color: var(--text-secondary); font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+  }
+  .btn-sm:hover { border-color: var(--border-hover); color: var(--text-primary); }
+  .btn-sm.danger:hover { border-color: var(--red); color: var(--red); }
+
+  .main-content {
+    padding: 28px 32px 48px;
+    max-width: 1440px; margin: 0 auto;
+  }
+
+  .section-title {
+    font-size: 13px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--text-muted);
+    margin-bottom: 16px; margin-top: 36px;
+  }
+  .section-title:first-child { margin-top: 0; }
+
+  /* KPI Cards */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+  }
+  .kpi-card {
+    padding: 20px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius); transition: all 0.2s;
+  }
+  .kpi-card:hover { border-color: var(--border-hover); background: var(--bg-card-hover); }
+  .kpi-label {
+    font-size: 12px; color: var(--text-muted); font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+  }
+  .kpi-label .dot { width: 6px; height: 6px; border-radius: 50%; }
+  .kpi-value {
+    font-size: 28px; font-weight: 700; letter-spacing: -1px;
+    margin-bottom: 6px; font-variant-numeric: tabular-nums;
+  }
+  .kpi-change {
+    font-size: 12px; font-weight: 500;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .kpi-change.up { color: var(--green); }
+  .kpi-change.down { color: var(--red); }
+  .kpi-change.neutral { color: var(--text-muted); }
+
+  /* Chart containers */
+  .chart-grid { display: grid; gap: 14px; grid-template-columns: 1fr 1fr; }
+  .chart-grid.triple { grid-template-columns: 1fr 1fr 1fr; }
+  .chart-grid.single { grid-template-columns: 1fr; }
+
+  .chart-card {
+    padding: 24px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius); transition: all 0.2s;
+    min-height: 320px;
+  }
+  .chart-card:hover { border-color: var(--border-hover); }
+  .chart-card.full { grid-column: 1 / -1; }
+
+  .chart-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .chart-title { font-size: 14px; font-weight: 600; }
+  .chart-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  .chart-canvas-wrap { position: relative; width: 100%; height: 240px; }
+  .chart-canvas-wrap canvas { width: 100% !important; height: 100% !important; }
+
+  /* Table */
+  .data-table { width: 100%; border-collapse: collapse; }
+  .data-table th {
+    text-align: left; padding: 10px 14px;
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .data-table td {
+    padding: 12px 14px; font-size: 13px;
+    border-bottom: 1px solid rgba(35,35,51,0.5);
+    color: var(--text-secondary);
+  }
+  .data-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .data-table .val {
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    color: var(--text-primary); font-weight: 500;
+  }
+
+  .bar-cell { display: flex; align-items: center; gap: 10px; }
+  .mini-bar {
+    height: 6px; border-radius: 3px;
+    background: var(--accent); opacity: 0.7;
+    transition: width 0.5s ease;
+  }
+
+  .pill {
+    display: inline-flex; padding: 3px 8px; border-radius: 12px;
+    font-size: 11px; font-weight: 500;
+  }
+  .pill.green { background: var(--green-dim); color: var(--green); }
+  .pill.red { background: var(--red-dim); color: var(--red); }
+  .pill.amber { background: var(--amber-dim); color: var(--amber); }
+  .pill.blue { background: var(--blue-dim); color: var(--blue); }
+
+  .loading-state {
+    display: flex; align-items: center; justify-content: center;
+    height: 200px; color: var(--text-muted); font-size: 14px;
+    flex-direction: column; gap: 12px;
+  }
+  .spinner {
+    width: 24px; height: 24px; border-radius: 50%;
+    border: 2px solid var(--border); border-top-color: var(--accent);
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .toast {
+    position: fixed; bottom: 24px; right: 24px; z-index: 2000;
+    padding: 14px 20px; border-radius: var(--radius-sm);
+    background: var(--bg-card); border: 1px solid var(--border);
+    box-shadow: var(--shadow-lg); font-size: 13px;
+    transform: translateY(100px); opacity: 0;
+    transition: all 0.3s ease;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.error { border-color: rgba(255,107,107,0.3); }
+  .toast.success { border-color: rgba(0,210,160,0.3); }
+
+  .status-connected {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--green); font-weight: 500;
+  }
+  .live-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--green); display: inline-block;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(0,210,160,0.4); }
+    50% { box-shadow: 0 0 0 6px rgba(0,210,160,0); }
+  }
+
+  .tab-nav {
+    display: flex; gap: 2px; margin-bottom: 16px;
+    background: var(--bg-secondary); border-radius: var(--radius-sm);
+    padding: 3px; width: fit-content;
+  }
+  .tab-btn {
+    padding: 7px 16px; border-radius: 6px;
+    font-size: 12px; font-weight: 500; color: var(--text-muted);
+    background: transparent; border: none; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+  }
+  .tab-btn.active {
+    background: var(--bg-card); color: var(--text-primary);
+    box-shadow: var(--shadow);
+  }
+  .tab-btn:hover:not(.active) { color: var(--text-secondary); }
+
+  .empty-state {
+    text-align: center; padding: 60px 24px; color: var(--text-muted);
+  }
+  .empty-state p { font-size: 14px; line-height: 1.6; }
+
+  @media (max-width: 1024px) {
+    .chart-grid { grid-template-columns: 1fr; }
+    .chart-grid.triple { grid-template-columns: 1fr; }
+    .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+  }
+  @media (max-width: 768px) {
+    .topbar { padding: 12px 16px; flex-wrap: wrap; gap: 8px; }
+    .main-content { padding: 20px 16px 40px; }
+    .kpi-grid { grid-template-columns: 1fr 1fr; }
+    .setup-container { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== SETUP SCREEN ==================== -->
+<div class="setup-overlay" id="setupOverlay">
+  <div class="setup-container">
+    <div class="setup-logo">
+      <div class="logo-mark">V</div>
+      <div class="logo-text">Veloka Analytics</div>
+    </div>
+
+    <h1 class="setup-heading">Connect Google Analytics</h1>
+    <p class="setup-subheading">
+      One-time setup — your credentials are stored securely in your browser's IndexedDB and never leave your device.
+    </p>
+
+    <div class="setup-step">
+      <div class="step-number">1</div>
+      <div class="step-content">
+        <h4>Create a Service Account</h4>
+        <p>Go to <a href="https://console.cloud.google.com/iam-admin/serviceaccounts" target="_blank">Google Cloud Console → Service Accounts</a>. Create a new service account, then go to <strong>Keys → Add Key → JSON</strong>. A <code>.json</code> file will download.</p>
+      </div>
+    </div>
+    <div class="setup-step">
+      <div class="step-number">2</div>
+      <div class="step-content">
+        <h4>Enable the GA4 Data API</h4>
+        <p>In the same project, go to <a href="https://console.cloud.google.com/apis/library/analyticsdata.googleapis.com" target="_blank">APIs & Services → Enable "Google Analytics Data API"</a>.</p>
+      </div>
+    </div>
+    <div class="setup-step">
+      <div class="step-number">3</div>
+      <div class="step-content">
+        <h4>Grant Access in GA4</h4>
+        <p>Go to <a href="https://analytics.google.com/" target="_blank">GA4 → Admin → Property Access Management</a>. Add your service account email as a <strong>Viewer</strong>.</p>
+      </div>
+    </div>
+    <div class="setup-step">
+      <div class="step-number">4</div>
+      <div class="step-content">
+        <h4>Get Your Property ID</h4>
+        <p>In GA4, go to <strong>Admin → Property Settings</strong>. Copy the numeric <strong>Property ID</strong> (e.g., <code>123456789</code>).</p>
+      </div>
+    </div>
+
+    <div class="setup-error" id="setupError"></div>
+
+    <div class="form-group">
+      <label>GA4 Property ID</label>
+      <input type="text" id="propertyId" placeholder="e.g. 123456789" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label>Service Account JSON Key</label>
+      <textarea id="serviceAccountJson" placeholder='Paste the entire contents of your downloaded .json key file here...'></textarea>
+    </div>
+
+    <button class="btn-primary" id="connectBtn" onclick="handleConnect()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+      Connect & Launch Dashboard
+    </button>
+
+    <div class="setup-divider">or</div>
+
+    <button class="btn-demo" onclick="launchDemo()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Preview with Demo Data
+    </button>
+  </div>
+</div>
+
+<!-- ==================== MAIN DASHBOARD ==================== -->
+<div class="dashboard" id="dashboard">
+  <nav class="topbar">
+    <div class="topbar-left">
+      <div class="logo-mark">V</div>
+      <div class="logo-text">Veloka</div>
+      <span class="property-badge" id="propBadge">GA4</span>
+      <div class="status-connected" id="statusIndicator">
+        <span class="live-dot"></span> Connected
+      </div>
+      <span class="demo-badge" id="demoBadge" style="display:none">DEMO MODE</span>
+    </div>
+    <div class="topbar-right">
+      <div class="date-selector">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <select id="dateRange" onchange="refreshData()">
+          <option value="7">Last 7 days</option>
+          <option value="14">Last 14 days</option>
+          <option value="28" selected>Last 28 days</option>
+          <option value="90">Last 90 days</option>
+        </select>
+      </div>
+      <button class="btn-sm" onclick="refreshData()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Refresh
+      </button>
+      <button class="btn-sm danger" onclick="resetCredentials()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.32 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
+      </button>
+    </div>
+  </nav>
+
+  <div class="main-content">
+    <div class="section-title">Overview</div>
+    <div class="kpi-grid" id="kpiGrid">
+      <div class="kpi-card">
+        <div class="kpi-label"><span class="dot" style="background:var(--accent)"></span> Total Users</div>
+        <div class="kpi-value" id="kpi-users">—</div>
+        <div class="kpi-change neutral" id="kpi-users-change">Loading...</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label"><span class="dot" style="background:var(--green)"></span> Sessions</div>
+        <div class="kpi-value" id="kpi-sessions">—</div>
+        <div class="kpi-change neutral" id="kpi-sessions-change">Loading...</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label"><span class="dot" style="background:var(--blue)"></span> Page Views</div>
+        <div class="kpi-value" id="kpi-pageviews">—</div>
+        <div class="kpi-change neutral" id="kpi-pageviews-change">Loading...</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label"><span class="dot" style="background:var(--cyan)"></span> New Users</div>
+        <div class="kpi-value" id="kpi-newusers">—</div>
+        <div class="kpi-change neutral" id="kpi-newusers-change">Loading...</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label"><span class="dot" style="background:var(--amber)"></span> Avg. Session Duration</div>
+        <div class="kpi-value" id="kpi-duration">—</div>
+        <div class="kpi-change neutral" id="kpi-duration-change">Loading...</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label"><span class="dot" style="background:var(--red)"></span> Bounce Rate</div>
+        <div class="kpi-value" id="kpi-bounce">—</div>
+        <div class="kpi-change neutral" id="kpi-bounce-change">Loading...</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label"><span class="dot" style="background:var(--pink)"></span> Engagement Rate</div>
+        <div class="kpi-value" id="kpi-engagement">—</div>
+        <div class="kpi-change neutral" id="kpi-engagement-change">Loading...</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label"><span class="dot" style="background:var(--green)"></span> Conversions</div>
+        <div class="kpi-value" id="kpi-conversions">—</div>
+        <div class="kpi-change neutral" id="kpi-conversions-change">Loading...</div>
+      </div>
+    </div>
+
+    <div class="section-title">Traffic & Engagement Trends</div>
+    <div class="chart-grid single">
+      <div class="chart-card full">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Daily Users & Sessions</div>
+            <div class="chart-subtitle">Trend over selected period</div>
+          </div>
+          <div class="tab-nav">
+            <button class="tab-btn active" onclick="switchTrendMetric('users', this)">Users</button>
+            <button class="tab-btn" onclick="switchTrendMetric('sessions', this)">Sessions</button>
+            <button class="tab-btn" onclick="switchTrendMetric('pageviews', this)">Page Views</button>
+          </div>
+        </div>
+        <div class="chart-canvas-wrap"><canvas id="trendChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="section-title">Acquisition & Behavior</div>
+    <div class="chart-grid">
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Traffic Sources</div>
+            <div class="chart-subtitle">Session medium breakdown</div>
+          </div>
+        </div>
+        <div class="chart-canvas-wrap"><canvas id="sourceChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Top Pages</div>
+            <div class="chart-subtitle">Most visited pages by views</div>
+          </div>
+        </div>
+        <div id="topPagesTable"></div>
+      </div>
+    </div>
+
+    <div class="section-title">Audience Insights</div>
+    <div class="chart-grid triple">
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Countries</div>
+            <div class="chart-subtitle">Users by location</div>
+          </div>
+        </div>
+        <div id="countryTable"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Devices</div>
+            <div class="chart-subtitle">Device category split</div>
+          </div>
+        </div>
+        <div class="chart-canvas-wrap"><canvas id="deviceChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Browsers</div>
+            <div class="chart-subtitle">Top browsers by users</div>
+          </div>
+        </div>
+        <div id="browserTable"></div>
+      </div>
+    </div>
+
+    <div class="section-title">Events & Conversions</div>
+    <div class="chart-grid">
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Top Events</div>
+            <div class="chart-subtitle">Event names by count</div>
+          </div>
+        </div>
+        <div id="eventsTable"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">User Flow</div>
+            <div class="chart-subtitle">Landing pages & engagement</div>
+          </div>
+        </div>
+        <div id="landingTable"></div>
+      </div>
+    </div>
+
+    <div class="section-title">Engagement Depth</div>
+    <div class="chart-grid">
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">New vs Returning Users</div>
+            <div class="chart-subtitle">User type distribution</div>
+          </div>
+        </div>
+        <div class="chart-canvas-wrap"><canvas id="newVsReturnChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Sessions per User</div>
+            <div class="chart-subtitle">Session count distribution</div>
+          </div>
+        </div>
+        <div class="chart-canvas-wrap"><canvas id="sessionsPerUserChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+
+<script>
+// =====================================================
+// State
+// =====================================================
+let IS_DEMO = false;
+let ACCESS_TOKEN = null;
+let PROPERTY_ID = null;
+let SERVICE_ACCOUNT = null;
+
+let trendChartInstance = null;
+let sourceChartInstance = null;
+let deviceChartInstance = null;
+let newVsReturnInstance = null;
+let sessionsPerUserInstance = null;
+let trendData = {};
+
+const chartColors = {
+  accent: '#6c5ce7', accentLight: '#8b7cf0', green: '#00d2a0',
+  blue: '#4da6ff', amber: '#ffc53d', red: '#ff6b6b',
+  cyan: '#22d3ee', pink: '#f472b6', purple: '#a78bfa',
+};
+
+const chartDefaults = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      backgroundColor: '#1c1c28', borderColor: '#232333', borderWidth: 1,
+      titleColor: '#e8e8f0', bodyColor: '#8888a4',
+      titleFont: { family: 'DM Sans', size: 13, weight: 600 },
+      bodyFont: { family: 'JetBrains Mono', size: 12 },
+      padding: 12, cornerRadius: 8, displayColors: false,
+    }
+  }
+};
+
+// =====================================================
+// IndexedDB
+// =====================================================
+const DB_NAME = 'VelokaGA4';
+const DB_VERSION = 1;
+const STORE_NAME = 'credentials';
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (e) => { e.target.result.createObjectStore(STORE_NAME, { keyPath: 'id' }); };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function saveCredentials(propertyId, serviceAccountJson) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).put({ id: 'ga4_creds', propertyId, serviceAccount: serviceAccountJson, createdAt: new Date().toISOString() });
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function loadCredentials() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const req = tx.objectStore(STORE_NAME).get('ga4_creds');
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function deleteCredentials() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).delete('ga4_creds');
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+// =====================================================
+// Google Auth (real mode only)
+// =====================================================
+async function getAccessToken(serviceAccount) {
+  const sa = typeof serviceAccount === 'string' ? JSON.parse(serviceAccount) : serviceAccount;
+  const header = { alg: 'RS256', typ: 'JWT' };
+  const now = Math.floor(Date.now() / 1000);
+  const claim = { iss: sa.client_email, scope: 'https://www.googleapis.com/auth/analytics.readonly', aud: 'https://oauth2.googleapis.com/token', iat: now, exp: now + 3600 };
+  const enc = (obj) => btoa(JSON.stringify(obj)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  const unsignedToken = `${enc(header)}.${enc(claim)}`;
+  const pemContents = sa.private_key.replace('-----BEGIN PRIVATE KEY-----','').replace('-----END PRIVATE KEY-----','').replace(/\s/g,'');
+  const binaryKey = Uint8Array.from(atob(pemContents), c => c.charCodeAt(0));
+  const cryptoKey = await crypto.subtle.importKey('pkcs8', binaryKey, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign']);
+  const signature = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', cryptoKey, new TextEncoder().encode(unsignedToken));
+  const sigB64 = btoa(String.fromCharCode(...new Uint8Array(signature))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  const jwt = `${unsignedToken}.${sigB64}`;
+  const resp = await fetch('https://oauth2.googleapis.com/token', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:`grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${jwt}` });
+  if (!resp.ok) { const err = await resp.json(); throw new Error(err.error_description || 'Token exchange failed'); }
+  return (await resp.json()).access_token;
+}
+
+async function runReport(dimensions, metrics, dateRange, orderBys, limit) {
+  if (!ACCESS_TOKEN) throw new Error('Not authenticated');
+  const body = { dateRanges: [dateRange], dimensions: dimensions.map(d => ({ name: d })), metrics: metrics.map(m => ({ name: m })) };
+  if (orderBys) body.orderBys = orderBys;
+  if (limit) body.limit = limit.toString();
+  const resp = await fetch(`https://analyticsdata.googleapis.com/v1beta/properties/${PROPERTY_ID}:runReport`, { method:'POST', headers:{ 'Authorization':`Bearer ${ACCESS_TOKEN}`, 'Content-Type':'application/json' }, body: JSON.stringify(body) });
+  if (resp.status === 401) { ACCESS_TOKEN = await getAccessToken(SERVICE_ACCOUNT); return runReport(dimensions, metrics, dateRange, orderBys, limit); }
+  if (!resp.ok) { const err = await resp.json(); throw new Error(err.error?.message || err.error?.status || 'API request failed — check that GA4 Data API is enabled and the service account has Viewer access on the property'); }
+  return resp.json();
+}
+
+// =====================================================
+// DEMO DATA GENERATOR
+// =====================================================
+function generateDemoData() {
+  const days = parseInt(document.getElementById('dateRange').value);
+  const baseUsers = 380; const baseSessions = 520; const basePV = 1450;
+
+  // Generate daily trend data with realistic patterns (weekday/weekend variation + growth)
+  const labels = [], users = [], sessions = [], pageviews = [];
+  const today = new Date();
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(today); d.setDate(d.getDate() - i);
+    labels.push(`${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`);
+    const dayOfWeek = d.getDay();
+    const weekendFactor = (dayOfWeek === 0 || dayOfWeek === 6) ? 0.6 : 1;
+    const growthFactor = 1 + ((days - i) / days) * 0.3;
+    const noise = () => 0.8 + Math.random() * 0.4;
+    users.push(Math.round(baseUsers * weekendFactor * growthFactor * noise() / (days/28)));
+    sessions.push(Math.round(baseSessions * weekendFactor * growthFactor * noise() / (days/28)));
+    pageviews.push(Math.round(basePV * weekendFactor * growthFactor * noise() / (days/28)));
+  }
+
+  const totalUsers = users.reduce((a,b)=>a+b, 0);
+  const totalSessions = sessions.reduce((a,b)=>a+b, 0);
+  const totalPV = pageviews.reduce((a,b)=>a+b, 0);
+  const totalNewUsers = Math.round(totalUsers * 0.62);
+
+  return {
+    kpis: {
+      users: { current: totalUsers, previous: Math.round(totalUsers * 0.88) },
+      sessions: { current: totalSessions, previous: Math.round(totalSessions * 0.91) },
+      pageviews: { current: totalPV, previous: Math.round(totalPV * 0.84) },
+      newusers: { current: totalNewUsers, previous: Math.round(totalNewUsers * 0.79) },
+      duration: { current: 187, previous: 164 },
+      bounce: { current: 0.384, previous: 0.421 },
+      engagement: { current: 0.616, previous: 0.579 },
+      conversions: { current: Math.round(totalUsers * 0.037), previous: Math.round(totalUsers * 0.037 * 0.82) },
+    },
+    trend: { labels, users, sessions, pageviews },
+    sources: {
+      labels: ['Organic Search', 'Direct', 'Referral', 'Organic Social', 'Email', 'Paid Search', 'Display'],
+      values: [
+        Math.round(totalSessions * 0.38),
+        Math.round(totalSessions * 0.22),
+        Math.round(totalSessions * 0.15),
+        Math.round(totalSessions * 0.11),
+        Math.round(totalSessions * 0.07),
+        Math.round(totalSessions * 0.05),
+        Math.round(totalSessions * 0.02),
+      ]
+    },
+    topPages: [
+      { page: '/', views: Math.round(totalPV*0.18), dur: 42 },
+      { page: '/ai-sdr', views: Math.round(totalPV*0.14), dur: 195 },
+      { page: '/pricing', views: Math.round(totalPV*0.11), dur: 124 },
+      { page: '/blog/ai-outbound-sales', views: Math.round(totalPV*0.08), dur: 248 },
+      { page: '/features', views: Math.round(totalPV*0.07), dur: 156 },
+      { page: '/demo', views: Math.round(totalPV*0.06), dur: 87 },
+      { page: '/blog/lead-generation-2026', views: Math.round(totalPV*0.05), dur: 312 },
+      { page: '/case-studies', views: Math.round(totalPV*0.04), dur: 203 },
+      { page: '/integrations', views: Math.round(totalPV*0.03), dur: 134 },
+      { page: '/about', views: Math.round(totalPV*0.02), dur: 67 },
+    ],
+    countries: [
+      { name: 'United States', users: Math.round(totalUsers*0.34) },
+      { name: 'India', users: Math.round(totalUsers*0.18) },
+      { name: 'United Kingdom', users: Math.round(totalUsers*0.10) },
+      { name: 'Canada', users: Math.round(totalUsers*0.07) },
+      { name: 'Germany', users: Math.round(totalUsers*0.06) },
+      { name: 'Australia', users: Math.round(totalUsers*0.04) },
+      { name: 'France', users: Math.round(totalUsers*0.03) },
+      { name: 'Singapore', users: Math.round(totalUsers*0.025) },
+      { name: 'Netherlands', users: Math.round(totalUsers*0.02) },
+      { name: 'Brazil', users: Math.round(totalUsers*0.015) },
+    ],
+    devices: {
+      labels: ['desktop', 'mobile', 'tablet'],
+      values: [Math.round(totalUsers*0.68), Math.round(totalUsers*0.27), Math.round(totalUsers*0.05)]
+    },
+    browsers: [
+      { name: 'Chrome', users: Math.round(totalUsers*0.58) },
+      { name: 'Safari', users: Math.round(totalUsers*0.19) },
+      { name: 'Firefox', users: Math.round(totalUsers*0.09) },
+      { name: 'Edge', users: Math.round(totalUsers*0.08) },
+      { name: 'Opera', users: Math.round(totalUsers*0.03) },
+      { name: 'Samsung Internet', users: Math.round(totalUsers*0.02) },
+    ],
+    events: [
+      { name: 'page_view', count: totalPV, users: totalUsers },
+      { name: 'session_start', count: totalSessions, users: totalUsers },
+      { name: 'first_visit', count: totalNewUsers, users: totalNewUsers },
+      { name: 'scroll', count: Math.round(totalPV*0.62), users: Math.round(totalUsers*0.71) },
+      { name: 'click', count: Math.round(totalPV*0.38), users: Math.round(totalUsers*0.54) },
+      { name: 'form_start', count: Math.round(totalUsers*0.12), users: Math.round(totalUsers*0.10) },
+      { name: 'form_submit', count: Math.round(totalUsers*0.05), users: Math.round(totalUsers*0.04) },
+      { name: 'cta_click', count: Math.round(totalUsers*0.18), users: Math.round(totalUsers*0.14) },
+      { name: 'video_start', count: Math.round(totalUsers*0.08), users: Math.round(totalUsers*0.06) },
+      { name: 'demo_request', count: Math.round(totalUsers*0.037), users: Math.round(totalUsers*0.035) },
+      { name: 'file_download', count: Math.round(totalUsers*0.06), users: Math.round(totalUsers*0.05) },
+      { name: 'outbound_click', count: Math.round(totalUsers*0.09), users: Math.round(totalUsers*0.07) },
+    ],
+    landingPages: [
+      { page: '/', sessions: Math.round(totalSessions*0.32), engRate: 0.58, dur: 67 },
+      { page: '/ai-sdr', sessions: Math.round(totalSessions*0.18), engRate: 0.74, dur: 195 },
+      { page: '/blog/ai-outbound-sales', sessions: Math.round(totalSessions*0.12), engRate: 0.81, dur: 248 },
+      { page: '/pricing', sessions: Math.round(totalSessions*0.10), engRate: 0.69, dur: 124 },
+      { page: '/features', sessions: Math.round(totalSessions*0.08), engRate: 0.65, dur: 156 },
+      { page: '/blog/lead-generation-2026', sessions: Math.round(totalSessions*0.06), engRate: 0.85, dur: 312 },
+      { page: '/demo', sessions: Math.round(totalSessions*0.05), engRate: 0.72, dur: 87 },
+      { page: '/case-studies', sessions: Math.round(totalSessions*0.04), engRate: 0.78, dur: 203 },
+    ],
+    newVsReturn: {
+      labels: ['new', 'returning'],
+      values: [totalNewUsers, totalUsers - totalNewUsers]
+    },
+    sessionsPerUser: labels.map((_, i) => {
+      const base = 1.3 + Math.random() * 0.6;
+      return parseFloat(base.toFixed(2));
+    }),
+  };
+}
+
+// =====================================================
+// Date Helpers
+// =====================================================
+function getDateRangeForDays(days) {
+  const end = new Date();
+  const start = new Date();
+  start.setDate(start.getDate() - days);
+  return {
+    startDate: start.toISOString().split('T')[0],
+    endDate: end.toISOString().split('T')[0]
+  };
+}
+
+function getPrevDateRangeForDays(days) {
+  const end = new Date();
+  end.setDate(end.getDate() - days);
+  const start = new Date(end);
+  start.setDate(start.getDate() - days);
+  return {
+    startDate: start.toISOString().split('T')[0],
+    endDate: end.toISOString().split('T')[0]
+  };
+}
+
+// =====================================================
+// Helpers
+// =====================================================
+function fmt(n) {
+  if (n === undefined || n === null || isNaN(n)) return '—';
+  if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n/1000).toFixed(1) + 'K';
+  return n.toLocaleString();
+}
+
+function fmtDuration(seconds) {
+  if (!seconds || isNaN(seconds)) return '0s';
+  const s = Math.round(seconds);
+  if (s < 60) return s + 's';
+  return `${Math.floor(s/60)}m ${s%60}s`;
+}
+
+function changeHtml(current, previous, inverse = false) {
+  if (!previous || previous === 0) return '<span class="kpi-change neutral">No prior data</span>';
+  const change = ((current - previous) / previous) * 100;
+  let cls;
+  if (inverse) cls = change < 0 ? 'up' : change > 0 ? 'down' : 'neutral';
+  else cls = change > 0 ? 'up' : change < 0 ? 'down' : 'neutral';
+  const arrow = change > 0 ? '↑' : change < 0 ? '↓' : '→';
+  return `<span class="kpi-change ${cls}">${arrow} ${Math.abs(change).toFixed(1)}% vs prior period</span>`;
+}
+
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// =====================================================
+// Render Functions (work with both real & demo data)
+// =====================================================
+function renderKPIs(data) {
+  const k = data.kpis;
+  document.getElementById('kpi-users').textContent = fmt(k.users.current);
+  document.getElementById('kpi-users-change').innerHTML = changeHtml(k.users.current, k.users.previous);
+  document.getElementById('kpi-sessions').textContent = fmt(k.sessions.current);
+  document.getElementById('kpi-sessions-change').innerHTML = changeHtml(k.sessions.current, k.sessions.previous);
+  document.getElementById('kpi-pageviews').textContent = fmt(k.pageviews.current);
+  document.getElementById('kpi-pageviews-change').innerHTML = changeHtml(k.pageviews.current, k.pageviews.previous);
+  document.getElementById('kpi-newusers').textContent = fmt(k.newusers.current);
+  document.getElementById('kpi-newusers-change').innerHTML = changeHtml(k.newusers.current, k.newusers.previous);
+  document.getElementById('kpi-duration').textContent = fmtDuration(k.duration.current);
+  document.getElementById('kpi-duration-change').innerHTML = changeHtml(k.duration.current, k.duration.previous);
+  document.getElementById('kpi-bounce').textContent = (k.bounce.current * 100).toFixed(1) + '%';
+  document.getElementById('kpi-bounce-change').innerHTML = changeHtml(k.bounce.current, k.bounce.previous, true);
+  document.getElementById('kpi-engagement').textContent = (k.engagement.current * 100).toFixed(1) + '%';
+  document.getElementById('kpi-engagement-change').innerHTML = changeHtml(k.engagement.current, k.engagement.previous);
+  document.getElementById('kpi-conversions').textContent = fmt(k.conversions.current);
+  document.getElementById('kpi-conversions-change').innerHTML = changeHtml(k.conversions.current, k.conversions.previous);
+}
+
+function renderTrendChart(metric) {
+  const ctx = document.getElementById('trendChart').getContext('2d');
+  if (trendChartInstance) trendChartInstance.destroy();
+  const data = trendData[metric] || [];
+  const colorMap = { users: chartColors.accent, sessions: chartColors.green, pageviews: chartColors.blue };
+  const color = colorMap[metric];
+  trendChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: trendData.labels || [],
+      datasets: [{
+        data, borderColor: color, backgroundColor: color + '15', fill: true,
+        tension: 0.35, pointRadius: 0, pointHoverRadius: 5,
+        pointHoverBackgroundColor: color, borderWidth: 2,
+      }]
+    },
+    options: {
+      ...chartDefaults,
+      scales: {
+        x: { grid: { color: 'rgba(35,35,51,0.4)', drawBorder: false }, ticks: { color: '#555570', font: { family: 'JetBrains Mono', size: 10 }, maxTicksLimit: 10 } },
+        y: { grid: { color: 'rgba(35,35,51,0.4)', drawBorder: false }, ticks: { color: '#555570', font: { family: 'JetBrains Mono', size: 10 }, callback: v => fmt(v) }, beginAtZero: true }
+      },
+      interaction: { intersect: false, mode: 'index' },
+    }
+  });
+}
+
+function renderSourcesChart(data) {
+  const ctx = document.getElementById('sourceChart').getContext('2d');
+  if (sourceChartInstance) sourceChartInstance.destroy();
+  const colors = [chartColors.accent, chartColors.green, chartColors.blue, chartColors.amber, chartColors.pink, chartColors.cyan, chartColors.red, chartColors.purple];
+  sourceChartInstance = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels: data.labels, datasets: [{ data: data.values, backgroundColor: colors.slice(0, data.labels.length), borderWidth: 0, hoverOffset: 6 }] },
+    options: { ...chartDefaults, cutout: '65%', plugins: { ...chartDefaults.plugins, legend: { display: true, position: 'right', labels: { color: '#8888a4', font: { family: 'DM Sans', size: 11 }, padding: 12, boxWidth: 10, boxHeight: 10, usePointStyle: true, pointStyle: 'circle' } } } }
+  });
+}
+
+function renderTopPages(pages) {
+  const maxViews = Math.max(...pages.map(p => p.views));
+  let html = '<table class="data-table"><thead><tr><th>Page</th><th>Views</th><th>Avg Duration</th><th></th></tr></thead><tbody>';
+  pages.forEach(p => {
+    const barW = (p.views / maxViews * 100).toFixed(0);
+    html += `<tr><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-primary)" title="${p.page}">${p.page}</td><td class="val">${fmt(p.views)}</td><td class="val">${fmtDuration(p.dur)}</td><td><div class="bar-cell"><div class="mini-bar" style="width:${barW}%;min-width:4px;"></div></div></td></tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('topPagesTable').innerHTML = html;
+}
+
+function renderCountries(countries) {
+  const max = Math.max(...countries.map(c => c.users));
+  let html = '<table class="data-table"><thead><tr><th>Country</th><th>Users</th><th></th></tr></thead><tbody>';
+  countries.forEach(c => {
+    const barW = (c.users / max * 100).toFixed(0);
+    html += `<tr><td style="color:var(--text-primary)">${c.name}</td><td class="val">${fmt(c.users)}</td><td><div class="bar-cell"><div class="mini-bar" style="width:${barW}%;min-width:4px;background:var(--green)"></div></div></td></tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('countryTable').innerHTML = html;
+}
+
+function renderDevices(data) {
+  const ctx = document.getElementById('deviceChart').getContext('2d');
+  if (deviceChartInstance) deviceChartInstance.destroy();
+  deviceChartInstance = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels: data.labels, datasets: [{ data: data.values, backgroundColor: [chartColors.accent, chartColors.green, chartColors.amber], borderWidth: 0, hoverOffset: 6 }] },
+    options: { ...chartDefaults, cutout: '60%', plugins: { ...chartDefaults.plugins, legend: { display: true, position: 'bottom', labels: { color: '#8888a4', font: { family: 'DM Sans', size: 12 }, padding: 16, usePointStyle: true, pointStyle: 'circle' } } } }
+  });
+}
+
+function renderBrowsers(browsers) {
+  const max = Math.max(...browsers.map(b => b.users));
+  let html = '<table class="data-table"><thead><tr><th>Browser</th><th>Users</th><th></th></tr></thead><tbody>';
+  browsers.forEach(b => {
+    const barW = (b.users / max * 100).toFixed(0);
+    html += `<tr><td style="color:var(--text-primary)">${b.name}</td><td class="val">${fmt(b.users)}</td><td><div class="bar-cell"><div class="mini-bar" style="width:${barW}%;min-width:4px;background:var(--cyan)"></div></div></td></tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('browserTable').innerHTML = html;
+}
+
+function renderEvents(events) {
+  const maxCount = Math.max(...events.map(e => e.count));
+  let html = '<table class="data-table"><thead><tr><th>Event</th><th>Count</th><th>Users</th><th></th></tr></thead><tbody>';
+  events.forEach(e => {
+    const barW = (e.count / maxCount * 100).toFixed(0);
+    html += `<tr><td><code style="font-family:'JetBrains Mono',monospace;font-size:12px;background:var(--bg-primary);padding:2px 8px;border-radius:4px;color:var(--amber)">${e.name}</code></td><td class="val">${fmt(e.count)}</td><td class="val">${fmt(e.users)}</td><td><div class="bar-cell"><div class="mini-bar" style="width:${barW}%;min-width:4px;background:var(--amber)"></div></div></td></tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('eventsTable').innerHTML = html;
+}
+
+function renderLandingPages(pages) {
+  let html = '<table class="data-table"><thead><tr><th>Landing Page</th><th>Sessions</th><th>Eng. Rate</th><th>Avg Dur</th></tr></thead><tbody>';
+  pages.forEach(p => {
+    const pillClass = p.engRate > 0.7 ? 'green' : p.engRate > 0.5 ? 'amber' : 'red';
+    html += `<tr><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-primary)" title="${p.page}">${p.page}</td><td class="val">${fmt(p.sessions)}</td><td><span class="pill ${pillClass}">${(p.engRate*100).toFixed(0)}%</span></td><td class="val">${fmtDuration(p.dur)}</td></tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('landingTable').innerHTML = html;
+}
+
+function renderNewVsReturn(data) {
+  const ctx = document.getElementById('newVsReturnChart').getContext('2d');
+  if (newVsReturnInstance) newVsReturnInstance.destroy();
+  newVsReturnInstance = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels: data.labels, datasets: [{ data: data.values, backgroundColor: [chartColors.blue, chartColors.pink], borderWidth: 0, hoverOffset: 6 }] },
+    options: { ...chartDefaults, cutout: '60%', plugins: { ...chartDefaults.plugins, legend: { display: true, position: 'bottom', labels: { color: '#8888a4', font: { family: 'DM Sans', size: 12 }, padding: 16, usePointStyle: true, pointStyle: 'circle' } } } }
+  });
+}
+
+function renderSessionsPerUser(labels, values) {
+  const ctx = document.getElementById('sessionsPerUserChart').getContext('2d');
+  if (sessionsPerUserInstance) sessionsPerUserInstance.destroy();
+  sessionsPerUserInstance = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ data: values, backgroundColor: chartColors.accent + '60', hoverBackgroundColor: chartColors.accent, borderRadius: 4, borderSkipped: false }] },
+    options: {
+      ...chartDefaults,
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#555570', font: { family: 'JetBrains Mono', size: 10 }, maxTicksLimit: 8 } },
+        y: { grid: { color: 'rgba(35,35,51,0.4)', drawBorder: false }, ticks: { color: '#555570', font: { family: 'JetBrains Mono', size: 10 } }, beginAtZero: true }
+      }
+    }
+  });
+}
+
+function switchTrendMetric(metric, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTrendChart(metric);
+}
+
+// =====================================================
+// Refresh (Demo or Real)
+// =====================================================
+async function refreshData() {
+  if (IS_DEMO) {
+    refreshDemo();
+    return;
+  }
+  showToast('Refreshing data...');
+  try {
+    await fetchAllRealData();
+    showToast('Dashboard updated ✓', 'success');
+  } catch (err) {
+    showToast('Error: ' + err.message, 'error');
+  }
+}
+
+function refreshDemo() {
+  const data = generateDemoData();
+  renderKPIs(data);
+  trendData = data.trend;
+  renderTrendChart('users');
+  renderSourcesChart(data.sources);
+  renderTopPages(data.topPages);
+  renderCountries(data.countries);
+  renderDevices(data.devices);
+  renderBrowsers(data.browsers);
+  renderEvents(data.events);
+  renderLandingPages(data.landingPages);
+  renderNewVsReturn(data.newVsReturn);
+  renderSessionsPerUser(data.trend.labels, data.sessionsPerUser);
+  showToast('Demo data loaded ✓', 'success');
+}
+
+// =====================================================
+// Real data fetching
+// =====================================================
+async function fetchAllRealData() {
+  const days = parseInt(document.getElementById('dateRange').value);
+  const range = getDateRangeForDays(days);
+  const prevRange = getPrevDateRangeForDays(days);
+
+  // KPIs
+  const [cur, prev] = await Promise.all([
+    runReport([], ['totalUsers','sessions','screenPageViews','newUsers','averageSessionDuration','bounceRate','engagementRate','conversions'], range),
+    runReport([], ['totalUsers','sessions','screenPageViews','newUsers','averageSessionDuration','bounceRate','engagementRate','conversions'], prevRange),
+  ]);
+  const c = cur.rows?.[0]?.metricValues || [];
+  const p = prev.rows?.[0]?.metricValues || [];
+  const kpiData = {
+    kpis: {
+      users: { current: parseFloat(c[0]?.value||0), previous: parseFloat(p[0]?.value||0) },
+      sessions: { current: parseFloat(c[1]?.value||0), previous: parseFloat(p[1]?.value||0) },
+      pageviews: { current: parseFloat(c[2]?.value||0), previous: parseFloat(p[2]?.value||0) },
+      newusers: { current: parseFloat(c[3]?.value||0), previous: parseFloat(p[3]?.value||0) },
+      duration: { current: parseFloat(c[4]?.value||0), previous: parseFloat(p[4]?.value||0) },
+      bounce: { current: parseFloat(c[5]?.value||0), previous: parseFloat(p[5]?.value||0) },
+      engagement: { current: parseFloat(c[6]?.value||0), previous: parseFloat(p[6]?.value||0) },
+      conversions: { current: parseFloat(c[7]?.value||0), previous: parseFloat(p[7]?.value||0) },
+    }
+  };
+  renderKPIs(kpiData);
+
+  // Trend
+  const trendResult = await runReport(['date'], ['totalUsers','sessions','screenPageViews'], range, [{ dimension: { dimensionName: 'date', orderType: 'ALPHANUMERIC' } }]);
+  const tLabels=[], tUsers=[], tSess=[], tPV=[];
+  (trendResult.rows||[]).forEach(r => { const d=r.dimensionValues[0].value; tLabels.push(`${d.slice(4,6)}/${d.slice(6,8)}`); tUsers.push(parseInt(r.metricValues[0].value)); tSess.push(parseInt(r.metricValues[1].value)); tPV.push(parseInt(r.metricValues[2].value)); });
+  trendData = { labels: tLabels, users: tUsers, sessions: tSess, pageviews: tPV };
+  renderTrendChart('users');
+
+  // Sources
+  const srcResult = await runReport(['sessionDefaultChannelGroup'], ['sessions'], range, [{ metric: { metricName: 'sessions' }, desc: true }], 8);
+  const srcLabels=[], srcValues=[];
+  (srcResult.rows||[]).forEach(r => { srcLabels.push(r.dimensionValues[0].value); srcValues.push(parseInt(r.metricValues[0].value)); });
+  renderSourcesChart({ labels: srcLabels, values: srcValues });
+
+  // Top Pages
+  const pagesResult = await runReport(['pagePath'], ['screenPageViews','averageSessionDuration'], range, [{ metric: { metricName: 'screenPageViews' }, desc: true }], 10);
+  renderTopPages((pagesResult.rows||[]).map(r => ({ page: r.dimensionValues[0].value, views: parseInt(r.metricValues[0].value), dur: parseFloat(r.metricValues[1].value) })));
+
+  // Countries
+  const countryResult = await runReport(['country'], ['totalUsers'], range, [{ metric: { metricName: 'totalUsers' }, desc: true }], 10);
+  renderCountries((countryResult.rows||[]).map(r => ({ name: r.dimensionValues[0].value, users: parseInt(r.metricValues[0].value) })));
+
+  // Devices
+  const devResult = await runReport(['deviceCategory'], ['totalUsers'], range, [{ metric: { metricName: 'totalUsers' }, desc: true }]);
+  const devLabels=[], devValues=[];
+  (devResult.rows||[]).forEach(r => { devLabels.push(r.dimensionValues[0].value); devValues.push(parseInt(r.metricValues[0].value)); });
+  renderDevices({ labels: devLabels, values: devValues });
+
+  // Browsers
+  const brResult = await runReport(['browser'], ['totalUsers'], range, [{ metric: { metricName: 'totalUsers' }, desc: true }], 8);
+  renderBrowsers((brResult.rows||[]).map(r => ({ name: r.dimensionValues[0].value, users: parseInt(r.metricValues[0].value) })));
+
+  // Events
+  const evResult = await runReport(['eventName'], ['eventCount','totalUsers'], range, [{ metric: { metricName: 'eventCount' }, desc: true }], 15);
+  renderEvents((evResult.rows||[]).map(r => ({ name: r.dimensionValues[0].value, count: parseInt(r.metricValues[0].value), users: parseInt(r.metricValues[1].value) })));
+
+  // Landing Pages
+  const lpResult = await runReport(['landingPagePlusQueryString'], ['sessions','engagementRate','averageSessionDuration'], range, [{ metric: { metricName: 'sessions' }, desc: true }], 10);
+  renderLandingPages((lpResult.rows||[]).map(r => ({ page: r.dimensionValues[0].value, sessions: parseInt(r.metricValues[0].value), engRate: parseFloat(r.metricValues[1].value), dur: parseFloat(r.metricValues[2].value) })));
+
+  // New vs Return
+  const nvrResult = await runReport(['newVsReturning'], ['totalUsers'], range);
+  const nvrLabels=[], nvrValues=[];
+  (nvrResult.rows||[]).forEach(r => { nvrLabels.push(r.dimensionValues[0].value||'Unknown'); nvrValues.push(parseInt(r.metricValues[0].value)); });
+  renderNewVsReturn({ labels: nvrLabels, values: nvrValues });
+
+  // Sessions per User
+  const spuResult = await runReport(['date'], ['sessionsPerUser'], range, [{ dimension: { dimensionName: 'date', orderType: 'ALPHANUMERIC' } }]);
+  const spuLabels=[], spuValues=[];
+  (spuResult.rows||[]).forEach(r => { const d=r.dimensionValues[0].value; spuLabels.push(`${d.slice(4,6)}/${d.slice(6,8)}`); spuValues.push(parseFloat(r.metricValues[0].value)); });
+  renderSessionsPerUser(spuLabels, spuValues);
+}
+
+// =====================================================
+// Connection Handlers
+// =====================================================
+async function handleConnect() {
+  const propertyId = document.getElementById('propertyId').value.trim();
+  const jsonText = document.getElementById('serviceAccountJson').value.trim();
+  const errorEl = document.getElementById('setupError');
+  const btn = document.getElementById('connectBtn');
+  errorEl.style.display = 'none';
+
+  if (!propertyId) { errorEl.textContent = 'Please enter your GA4 Property ID'; errorEl.style.display = 'block'; return; }
+  let parsed;
+  try { parsed = JSON.parse(jsonText); if (!parsed.client_email || !parsed.private_key) throw new Error(); }
+  catch (e) { errorEl.textContent = 'Invalid JSON key — paste the complete .json file with client_email and private_key fields.'; errorEl.style.display = 'block'; return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner" style="width:18px;height:18px;border-width:2px;"></div> Connecting...';
+
+  try {
+    SERVICE_ACCOUNT = parsed; PROPERTY_ID = propertyId;
+    ACCESS_TOKEN = await getAccessToken(parsed);
+    await runReport([], ['totalUsers'], getDateRangeForDays(7));
+    await saveCredentials(propertyId, jsonText);
+    IS_DEMO = false;
+    showToast('Connected to GA4! ✓', 'success');
+    launchDashboard(false);
+  } catch (err) {
+    errorEl.textContent = 'Connection failed: ' + err.message; errorEl.style.display = 'block';
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> Connect & Launch Dashboard';
+  }
+}
+
+function launchDemo() {
+  IS_DEMO = true;
+  launchDashboard(true);
+}
+
+function launchDashboard(isDemo) {
+  document.getElementById('setupOverlay').classList.add('hidden');
+  document.getElementById('dashboard').classList.add('visible');
+  
+  if (isDemo) {
+    document.getElementById('propBadge').textContent = 'Demo: veloka.io';
+    document.getElementById('statusIndicator').style.display = 'none';
+    document.getElementById('demoBadge').style.display = 'inline-flex';
+    refreshDemo();
+  } else {
+    document.getElementById('propBadge').textContent = `Property: ${PROPERTY_ID}`;
+    document.getElementById('statusIndicator').style.display = 'flex';
+    document.getElementById('demoBadge').style.display = 'none';
+    refreshData();
+  }
+}
+
+async function resetCredentials() {
+  if (IS_DEMO) {
+    document.getElementById('dashboard').classList.remove('visible');
+    document.getElementById('setupOverlay').classList.remove('hidden');
+    return;
+  }
+  if (!confirm('Remove saved credentials and return to setup?')) return;
+  await deleteCredentials();
+  ACCESS_TOKEN = null; PROPERTY_ID = null; SERVICE_ACCOUNT = null;
+  document.getElementById('dashboard').classList.remove('visible');
+  document.getElementById('setupOverlay').classList.remove('hidden');
+  document.getElementById('propertyId').value = '';
+  document.getElementById('serviceAccountJson').value = '';
+  showToast('Credentials removed', 'success');
+}
+
+// =====================================================
+// Init
+// =====================================================
+async function init() {
+  try {
+    const creds = await loadCredentials();
+    if (creds && creds.propertyId && creds.serviceAccount) {
+      try {
+        const sa = JSON.parse(creds.serviceAccount);
+        SERVICE_ACCOUNT = sa; PROPERTY_ID = creds.propertyId;
+        ACCESS_TOKEN = await getAccessToken(sa);
+        IS_DEMO = false;
+        launchDashboard(false);
+      } catch (err) { console.error('Saved credentials invalid:', err); }
+    }
+  } catch (err) { console.error('IndexedDB error:', err); }
+}
+
+init();
+</script>
+</body>
+</html>
